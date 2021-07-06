@@ -3,7 +3,7 @@ from lbrc_flask.database import db
 
 class EdgeSiteStudy(db.Model):
     __tablename__ = 'edge_site_study'
-    __bind_key__ = 'edge'
+    __bind_key__ = 'etl_central'
 
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer)
