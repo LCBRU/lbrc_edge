@@ -1,0 +1,8 @@
+-r requirements.txt
+
+pytest
+Faker
+coverage
+pytest-cov
+pytest-xdist
+icecream
