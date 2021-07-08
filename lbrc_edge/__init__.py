@@ -24,7 +24,7 @@ class EdgeSiteStudy(db.Model):
     project_site_closed_date = db.Column(db.Date)
     project_site_planned_recruitment_end_date = db.Column(db.Date)
     project_site_actual_recruitment_end_date = db.Column(db.Date)
-    principle_investigator = db.Column(db.String)
+    principal_investigator = db.Column(db.String)
     project_site_target_participants = db.Column(db.Integer)
     project_site_estimated_annual_target = db.Column(db.Integer)
     recruited_org = db.Column(db.Integer)
