@@ -1,5 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, date
+import math
+
 
 db = SQLAlchemy()
 
@@ -43,29 +45,52 @@ class EdgeSiteStudy(db.Model):
     name_of_brc_involved = db.Column(db.String)
 
     @property
+    def key_staff(self):
+        staff = []
+
+        if self.principal_investigator:
+            staff.append(f'Principal Investigator: {self.principal_investigator}')
+
+        if self.project_site_lead_nurses:
+            staff.append(f'Lead Nurse: {self.project_site_lead_nurses}')
+
+        return '; '.join(staff)
+            
+    @property
     def effective_recruitment_start_date(self):
-        return self.project_site_start_date_nhs_permission or self.project_site_date_site_confirmed
+        result = self.project_site_start_date_nhs_permission or self.project_site_date_site_confirmed
+
+        if result:
+            return date(result.year, result.month, result.day)
 
     @property
     def effective_recruitment_end_date(self):
-        return self.project_site_actual_recruitment_end_date or self.project_site_planned_recruitment_end_date
+        result = self.project_site_actual_recruitment_end_date or self.project_site_planned_recruitment_end_date
 
-    def target_requirement_by(self, end_date):
+        if result:
+            return date(result.year, result.month, result.day)
+
+    def target_requirement_by(self, end_date=None):
         if self.effective_recruitment_start_date is None or self.project_site_target_participants is None or self.effective_recruitment_end_date is None:
             return None
+
+        if end_date is None:
+            end_date = datetime.now().date()
         
-        return self.project_site_target_participants * (self.effective_recruitment_start_date - end_date) / (self.effective_recruitment_start_date - self.effective_recruitment_end_date)
+        end_date = min(end_date, self.effective_recruitment_end_date)
+
+        return int(math.ceil(self.project_site_target_participants * (self.effective_recruitment_start_date - end_date).days / (self.effective_recruitment_start_date - self.effective_recruitment_end_date).days))
 
     @property
     def current_target_recruited_percent(self):
-        target_by_now = self.target_requirement_by(datetime.now.date())
+        target_by_now = self.target_requirement_by()
 
-        if target_by_now is None:
+        if not target_by_now:
             return None
 
         recruited = self.recruited_org or 0
         
-        return recruited * 100 / target_by_now
+        return round(recruited * 100 / target_by_now, 0)
 
     @property
     def rag_rating(self):
@@ -75,8 +100,8 @@ class EdgeSiteStudy(db.Model):
             return None
 
         if target_perc_now >= 100:
-            return 'green'
+            return 'success'
         elif target_perc_now < 80:
-            return 'red'
+            return 'danger'
         else:
-            return 'amber'
+            return 'warning'
