@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -40,3 +41,33 @@ class EdgeSiteStudy(db.Model):
     study_category = db.Column(db.String)
     randomised_name = db.Column(db.String)
     name_of_brc_involved = db.Column(db.String)
+
+    @property
+    def effective_recruitment_start_date(self):
+        return self.project_site_start_date_nhs_permission or self.project_site_date_site_confirmed
+
+    @property
+    def effective_recruitment_end_date(self):
+        return self.project_site_actual_recruitment_end_date or self.project_site_planned_recruitment_end_date
+
+    def target_requirement_by(self, end_date):
+        if self.effective_recruitment_start_date is None or self.project_site_target_participants is None or self.effective_recruitment_end_date is None:
+            return None
+        
+        return self.project_site_target_participants * (self.effective_recruitment_start_date - end_date) / (self.effective_recruitment_start_date - self.effective_recruitment_end_date)
+
+    @property
+    def rag_rating(self):
+        target_by_now = self.target_requirement_by(datetime.now.date())
+
+        if target_by_now is None:
+            return None
+
+        recruited = self.recruited_org or 0
+        
+        if recruited >= target_by_now:
+            return 'green'
+        elif recruited < (target_by_now * 0.8):
+            return 'red'
+        else:
+            return 'amber'
