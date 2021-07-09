@@ -57,7 +57,7 @@ class EdgeSiteStudy(db.Model):
         return self.project_site_target_participants * (self.effective_recruitment_start_date - end_date) / (self.effective_recruitment_start_date - self.effective_recruitment_end_date)
 
     @property
-    def rag_rating(self):
+    def current_target_recruited_percent(self):
         target_by_now = self.target_requirement_by(datetime.now.date())
 
         if target_by_now is None:
@@ -65,9 +65,18 @@ class EdgeSiteStudy(db.Model):
 
         recruited = self.recruited_org or 0
         
-        if recruited >= target_by_now:
+        return recruited * 100 / target_by_now
+
+    @property
+    def rag_rating(self):
+        target_perc_now = self.current_target_recruited_percent
+
+        if target_perc_now is None:
+            return None
+
+        if target_perc_now >= 100:
             return 'green'
-        elif recruited < (target_by_now * 0.8):
+        elif target_perc_now < 80:
             return 'red'
         else:
             return 'amber'
