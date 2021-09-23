@@ -27,6 +27,8 @@ class EdgeSiteStudy(db.Model):
     project_site_target_participants = db.Column(db.Integer)
     recruited_org = db.Column(db.Integer)
     project_site_lead_nurses = db.Column(db.String)
+    planned_start_date = db.Column(db.Date)
+    planned_end_date = db.Column(db.Date)
 
     # calculated fields
     effective_recruitment_start_date = db.Column(db.Date)
@@ -49,7 +51,7 @@ class EdgeSiteStudy(db.Model):
         self._calculate_rag_rating()
 
     def _calculate_effective_recruitment_start_date(self):
-        result = self.project_site_start_date_nhs_permission or self.project_site_date_site_confirmed
+        result = self.project_site_start_date_nhs_permission or self.project_site_date_site_confirmed or self.planned_start_date
 
         if result:
             self.effective_recruitment_start_date = date(result.year, result.month, result.day)    
@@ -57,7 +59,7 @@ class EdgeSiteStudy(db.Model):
             self.effective_recruitment_start_date = None
 
     def _calculate_effective_recruitment_end_date(self):
-        result = self.project_site_actual_recruitment_end_date or self.project_site_planned_recruitment_end_date
+        result = self.project_site_actual_recruitment_end_date or self.project_site_planned_recruitment_end_date or self.planned_end_date
 
         if result:
             self.effective_recruitment_end_date = date(result.year, result.month, result.day)
@@ -97,6 +99,30 @@ class EdgeSiteStudy(db.Model):
                 self.rag_rating = 'danger'
             else:
                 self.rag_rating = 'warning'
+
+    def study_dates(self):
+        result = {}
+
+        if self.project_site_rand_submission_date is not None:
+            result['Project Site R&D Submission Date'] = self.project_site_rand_submission_date
+        if self.project_site_start_date_nhs_permission is not None:
+            result['Project Site Start Date (NHS Permission)'] = self.project_site_start_date_nhs_permission
+        if self.project_site_date_site_confirmed is not None:
+            result['Project Site Date Site Confirmed'] = self.project_site_date_site_confirmed
+        if self.project_site_planned_closing_date is not None:
+            result['Project Site Planned Closing Date'] = self.project_site_planned_closing_date
+        if self.project_site_closed_date is not None:
+            result['Project Site Closed Date'] = self.project_site_closed_date
+        if self.project_site_planned_recruitment_end_date is not None:
+            result['Project Site Planned Recruitment End Date'] = self.project_site_planned_recruitment_end_date
+        if self.project_site_actual_recruitment_end_date is not None:
+            result['Project Site Actual Recruitment End Date'] = self.project_site_actual_recruitment_end_date
+        if self.planned_start_date is not None:
+            result['Planned Start Date'] = self.planned_start_date
+        if self.planned_end_date is not None:
+            result['Planned End Date'] = self.planned_end_date
+
+        return result
 
     @property
     def key_staff(self):
